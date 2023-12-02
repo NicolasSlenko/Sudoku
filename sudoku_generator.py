@@ -1,4 +1,4 @@
-import math, random
+import math, random, copy
 class SudokuGenerator:
   '''
   create a sudoku board - initialize class variables and set up the 2D board
@@ -208,8 +208,9 @@ def generate_sudoku(size, removed):
   sudoku = SudokuGenerator(size, removed)
   sudoku.fill_values()
   board = sudoku.get_board()
+  completed_board = copy.deepcopy(board)
   sudoku.remove_cells()
   board = sudoku.get_board()
-  return board
+  return board, completed_board
 
 
