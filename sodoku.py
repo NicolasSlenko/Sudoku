@@ -1,9 +1,9 @@
 import pygame, sys, sudoku_generator
-
+import copy
 import cell
 from cell import Cell
 
-
+original_board = None
 def print_board(board,row_length,col_length):
   for row in range(row_length):
     for col in range(row_length):
@@ -118,7 +118,7 @@ def generate_board(screen, user, cell_list):
 
         return screen
 
-def play_board(screen, cell_list):
+def play_board(screen, cell_list, user):
     oldx = 0
     oldy = 0
     input_active = False
@@ -155,8 +155,101 @@ def play_board(screen, cell_list):
                 if exit_rectangle.collidepoint(pos):
                     sys.exit()  # Exit the program
 
+                if restart_rectangle.collidepoint(pos):
+                    # Generate a new board
+                    if user == 1:
+                        game_board, solved_board = sudoku_generator.generate_sudoku(9, 1)
+                    elif user == 2:
+                        game_board, solved_board = sudoku_generator.generate_sudoku(9, 40)
+                    elif user == 3:
+                        game_board, solved_board = sudoku_generator.generate_sudoku(9, 50)
+
+                    original_board = copy.deepcopy(game_board)  # Update the original board
+
+                    # Reset the values of the cells in cell_list to the new board
+                    for i in range(9):
+                        for j in range(9):
+                            cell_list[i * 9 + j].set_cell_value(original_board[i][j])
+
+                    # Clear the screen
+                    screen.fill((160, 223, 231))
+
+                    # Redraw the lines to create the board
+                    cell_size = 600 // 9  # Define cell_size before using it
+                    for i in range(10):
+                        line_width = 7 if i % 3 == 0 else 2
+                        pygame.draw.line(screen, (0, 0, 0), (i * cell_size, 0), (i * cell_size, 600),
+                                         width=line_width)
+                        pygame.draw.line(screen, (0, 0, 0), (0, i * cell_size), (600, i * cell_size),
+                                         width=line_width)
+
+                    # Redraw the numbers from original_board using Cell class
+                    for i in range(9):
+                        for j in range(9):
+                            value = original_board[i][j]
+                            row, col = i, j
+
+                            font = pygame.font.Font(None, 40)
+
+                            # Create a new Cell object with the original value and cell size
+                            c = Cell(value, row, col, screen)
+
+                            # Draw the cell (original value) using the Cell class method
+                            c.render(screen, font)
+
+                    # Update the display
+                    pygame.display.flip()
+
+                    # Reset the values of the cells in cell_list to their original values
+                    for i in range(9):
+                        for j in range(9):
+                            original_value = original_board[i][j]
+                            cell_list[i * 9 + j].set_cell_value(original_value)
+
                 if reset_rectangle.collidepoint(pos):
-                    pass
+                        # Clear the screen
+                        screen.fill((160, 223, 231))
+
+                        # Redraw the lines to create the board
+                        cell_size = 600 // 9  # Define cell_size before using it
+                        for i in range(10):
+                            line_width = 7 if i % 3 == 0 else 2
+                            pygame.draw.line(screen, (0, 0, 0), (i * cell_size, 0), (i * cell_size, 600),
+                                             width=line_width)
+                            pygame.draw.line(screen, (0, 0, 0), (0, i * cell_size), (600, i * cell_size),
+                                             width=line_width)
+
+                        # Redraw the numbers from original_board using Cell class
+                        for i in range(9):
+                            for j in range(9):
+                                value = original_board[i][j]
+                                row, col = i, j
+
+                                font = pygame.font.Font(None, 40)
+
+                                # Create a new Cell object with the original value and cell size
+                                c = Cell(value, row, col, screen)
+
+                                # Draw the cell (original value) using the Cell class method
+                                c.render(screen, font)
+
+                        # Update the display
+                        pygame.display.flip()
+
+                        # Reset the values of the cells in cell_list to their original values
+                        for i in range(9):
+                            for j in range(9):
+                                original_value = original_board[i][j]
+                                cell_list[i * 9 + j].set_cell_value(original_value)
+
+                        print("Board reset to original state!")
+
+
+
+
+
+
+
 
 
             elif event.type == pygame.KEYDOWN:
@@ -236,7 +329,8 @@ if __name__ == '__main__':
     board_screen = pygame.display.set_mode([600, 700])
 
     if user == 1: #change after to make removed: 30
-        game_board, solved_board = sudoku_generator.generate_sudoku(9, 1)
+        game_board, solved_board = sudoku_generator.generate_sudoku(9, 3)
+        original_board = copy.deepcopy(game_board)
         print_board(solved_board,9,9)
         for i in range(0,9):
             for j in range(0,9):
@@ -244,12 +338,14 @@ if __name__ == '__main__':
                 cell_list.append(c)
     elif user == 2:
         game_board, solved_board  = sudoku_generator.generate_sudoku(9,40)
+        original_board = copy.deepcopy(game_board)
         for i in range(0,9):
             for j in range(0,9):
                 c = Cell(game_board[i][j], i, j, board_screen)
                 cell_list.append(c)
     elif user == 3:
         game_board, solved_board = sudoku_generator.generate_sudoku(9, 50)
+        original_board = copy.deepcopy(game_board)
         for i in range(0,9):
             for j in range(0,9):
                 c = Cell(game_board[i][j], i, j, board_screen)
@@ -257,7 +353,7 @@ if __name__ == '__main__':
 
 
     board_screen = generate_board(board_screen, user, cell_list)
-    user = play_board(board_screen, cell_list)
+    user = play_board(board_screen, cell_list, user)
 
 
 
@@ -273,7 +369,7 @@ if __name__ == '__main__':
             user = start_menu(start_screen)
             board_screen = pygame.display.set_mode([600, 700])
             board_screen = generate_board(board_screen, user)
-            user = play_board(board_screen)
+            user = play_board(board_screen, user)
         if user == 6:
             sys.exit()
 
