@@ -2,8 +2,11 @@ import pygame, sys, sudoku_generator
 import copy
 import cell
 from cell import Cell
+from cell import unhighlight, get_cell
 
 original_board = None
+solved_board = None
+
 def print_board(board,row_length,col_length):
   for row in range(row_length):
     for col in range(row_length):
@@ -118,13 +121,14 @@ def generate_board(screen, user, cell_list):
 
         return screen
 
-def play_board(screen, cell_list, user):
+def play_board(screen, cell_list, user, original_board, solved_board):
     oldx = 0
     oldy = 0
     input_active = False
     input_text = ""
     selected_cell = None  # Variable to store the selected cell
-
+    previousInteraction = None
+    previousCell = None
     def check_if_done(cell_list):
         for cell in cell_list:
             if cell.value == 0:
@@ -140,16 +144,29 @@ def play_board(screen, cell_list, user):
                 pos = pygame.mouse.get_pos()
                 x = pos[0] // 66
                 y = pos[1] // 66
-                x1 = x
-                y1 = y
-                cell.unhighlight(screen, oldx, oldy)
+
+                if previousInteraction == "arrow" or previousInteraction == "click" and oldx != None:
+                    unhighlight(screen, oldx, oldy)
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            unhighlight(screen, cell.row,cell.col)
+                            cell.highlighted = False
+
+                if oldx != None:
+                    cellOld = get_cell(oldx, oldy, cell_list)
+                    cellOld.highlighted = False
+
+
                 for z in cell_list:
                     if z.get_row() == y and z.get_col() == x:
                         z.highlight()
                         oldx = y
                         oldy = x
+
                         selected_cell = z  # Store the selected cell
                         input_active = True
+                        previousInteraction = "click"
+                        previousCell = get_cell(oldx,oldy,cell_list)
                         break
                         # Check if the mouse click is within the exit button's rectangle
                 if exit_rectangle.collidepoint(pos):
@@ -244,14 +261,6 @@ def play_board(screen, cell_list, user):
 
                         print("Board reset to original state!")
 
-
-
-
-
-
-
-
-
             elif event.type == pygame.KEYDOWN:
                 if input_active:
                     if event.key == pygame.K_RETURN:
@@ -265,14 +274,13 @@ def play_board(screen, cell_list, user):
                                     if (check_if_done(cell_list)):
                                         # Initialize an empty 9x9 array
                                         final_board = [[0 for _ in range(9)] for _ in range(9)]
-
                                         # Fill in the final_board using the values from the cell_list
                                         for i in range(9):
                                             for j in range(9):
                                                 final_board[i][j] = cell_list[i * 9 + j].value
                                         print_board(final_board,9,9)
                                         print("")
-                                        print_board(solved_board,9,9)
+
                                         if final_board == solved_board:
                                             print("You Win!")
                                         else:
@@ -286,8 +294,268 @@ def play_board(screen, cell_list, user):
                         input_text = ""  # Reset the input_text after storing the input
                         input_active = False  # Deactivate input mode
                     else:
-                        # Handle other key presses to append characters to the input
-                        input_text += event.unicode
+                        if (event.key != pygame.K_LEFT and event.key != pygame.K_RIGHT and event.key != pygame.K_UP and event.key != pygame.K_DOWN):
+                            # Handle other key presses to append characters to the input
+                            input_text += event.unicode
+
+                #arrow key functions
+                if event.key == pygame.K_LEFT: #############################################################
+                    input_active = True
+                    #get current position based on currently highlighted cell
+                    row, col = None, None
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            row, col = cell.row, cell.col
+                            if row is not None and col is not None and col - 1 >= 0:
+                                if previousInteraction == "arrow":
+                                    previousCell = get_cell(row,col,cell_list)
+                                    unhighlight(screen, cell.row, cell.col)
+                                else:
+                                    previousCell = selected_cell
+                                    unhighlight(screen, cell.row, cell.col)
+                                cell.highlighted = False
+                            print(cell.row, cell.col, "is highlighted")
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            numH += 1
+                    print(numH, " total highlighted")
+
+                    #highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
+                    if row is not None and col is not None and col - 1 >= 0:
+                        newRow = previousCell.row
+                        newCol = previousCell.col - 1
+                        newcell = get_cell(newRow, newCol, cell_list)
+                        newcell.highlight()
+                        selected_cell = newcell
+                        print("Current highlight at row: ", row, "col: ", col-1)
+                    if input_active:
+                        if event.key == pygame.K_RETURN:
+                            #fill in cell
+                            try:
+                                userInput = int(input_text)
+                                print(userInput)
+                                if 1 <= userInput <= 9:  # Check if the input is a valid number
+                                    if selected_cell.value == 0:
+                                        selected_cell.displayfill(screen, button_font, userInput)
+                                        if (check_if_done(cell_list)):
+                                            # Initialize an empty 9x9 array
+                                            final_board = [[0 for _ in range(9)] for _ in range(9)]
+                                            # Fill in the final_board using the values from the cell_list
+                                            for i in range(9):
+                                                for j in range(9):
+                                                    final_board[i][j] = cell_list[i * 9 + j].value
+                                            print_board(final_board, 9, 9)
+                                            print("")
+
+                                            if final_board == solved_board:
+                                                print("You Win!")
+                                            else:
+                                                print("You Lose!")
+                                    else:
+                                        print("Cannot fill in already filled cell!")
+                                else:
+                                    print("Invalid input. Please enter a number between 1 and 9.")
+                            except ValueError:
+                                print("Invalid input. Please enter a valid number.")
+                            input_text = ""  # Reset the input_text after storing the input
+                            input_active = False  # Deactivate input mode
+
+                    previousInteraction = "arrow"
+                    print("Left arrow key pressed")
+                elif event.key == pygame.K_RIGHT:
+                    input_active = True
+                    # get current position based on currently highlighted cell
+                    row, col = None, None
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            row, col = cell.row, cell.col
+                            if row is not None and col is not None and col + 1 < 9:
+                                if previousInteraction == "arrow":
+                                    previousCell = get_cell(row, col, cell_list)
+                                    unhighlight(screen, cell.row, cell.col)
+                                else:
+                                    previousCell = selected_cell
+                                    unhighlight(screen, cell.row, cell.col)
+                                cell.highlighted = False
+                            print(cell.row, cell.col, "is highlighted")
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            numH += 1
+                    print(numH, " total highlighted")
+
+                    # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
+                    if row is not None and col is not None and col + 1 < 9:
+                        newRow = previousCell.row
+                        newCol = previousCell.col + 1
+                        newcell = get_cell(newRow, newCol, cell_list)
+                        newcell.highlight()
+                        selected_cell = newcell
+                        print("Current highlight at row: ", row, "col: ", col + 1)
+                    if input_active:
+                        if event.key == pygame.K_RETURN:
+                            #fill in cell
+                            try:
+                                userInput = int(input_text)
+                                print(userInput)
+                                if 1 <= userInput <= 9:  # Check if the input is a valid number
+                                    if selected_cell.value == 0:
+                                        selected_cell.displayfill(screen, button_font, userInput)
+                                        if (check_if_done(cell_list)):
+                                            # Initialize an empty 9x9 array
+                                            final_board = [[0 for _ in range(9)] for _ in range(9)]
+                                            # Fill in the final_board using the values from the cell_list
+                                            for i in range(9):
+                                                for j in range(9):
+                                                    final_board[i][j] = cell_list[i * 9 + j].value
+                                            print_board(final_board, 9, 9)
+                                            print("")
+
+                                            if final_board == solved_board:
+                                                print("You Win!")
+                                            else:
+                                                print("You Lose!")
+                                    else:
+                                        print("Cannot fill in already filled cell!")
+                                else:
+                                    print("Invalid input. Please enter a number between 1 and 9.")
+                            except ValueError:
+                                print("Invalid input. Please enter a valid number.")
+                            input_text = ""  # Reset the input_text after storing the input
+                            input_active = False  # Deactivate input mode
+                    previousInteraction = "arrow"
+                    print("Right arrow key pressed")
+                elif event.key == pygame.K_UP:
+                    input_active = True
+                    # get current position based on currently highlighted cell
+                    row, col = None, None
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            row, col = cell.row, cell.col
+                            if row is not None and col is not None and row - 1 >= 0:
+                                if previousInteraction == "arrow":
+                                    previousCell = get_cell(row, col, cell_list)
+                                    unhighlight(screen, cell.row, cell.col)
+                                else:
+                                    previousCell = selected_cell
+                                    unhighlight(screen, cell.row, cell.col)
+                                cell.highlighted = False
+                            print(cell.row, cell.col, "is highlighted")
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            numH += 1
+                    print(numH, " total highlighted")
+
+                    # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
+                    if row is not None and col is not None and row - 1 >= 0:
+                        newRow = previousCell.row - 1
+                        newCol = previousCell.col
+                        newcell = get_cell(newRow, newCol, cell_list)
+                        newcell.highlight()
+                        selected_cell = newcell
+                        print("Current highlight at row: ", row - 1, "col: ", col)
+                    if input_active:
+                        if event.key == pygame.K_RETURN:
+                            #fill in cell
+                            try:
+                                userInput = int(input_text)
+                                print(userInput)
+                                if 1 <= userInput <= 9:  # Check if the input is a valid number
+                                    if selected_cell.value == 0:
+                                        selected_cell.displayfill(screen, button_font, userInput)
+                                        if (check_if_done(cell_list)):
+                                            # Initialize an empty 9x9 array
+                                            final_board = [[0 for _ in range(9)] for _ in range(9)]
+                                            # Fill in the final_board using the values from the cell_list
+                                            for i in range(9):
+                                                for j in range(9):
+                                                    final_board[i][j] = cell_list[i * 9 + j].value
+                                            print_board(final_board, 9, 9)
+                                            print("")
+
+                                            if final_board == solved_board:
+                                                print("You Win!")
+                                            else:
+                                                print("You Lose!")
+                                    else:
+                                        print("Cannot fill in already filled cell!")
+                                else:
+                                    print("Invalid input. Please enter a number between 1 and 9.")
+                            except ValueError:
+                                print("Invalid input. Please enter a valid number.")
+                            input_text = ""  # Reset the input_text after storing the input
+                            input_active = False  # Deactivate input mode
+                    previousInteraction = "arrow"
+                    print("Up arrow key pressed")
+                elif event.key == pygame.K_DOWN:
+                    input_active = True
+                    # get current position based on currently highlighted cell
+                    row, col = None, None
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            row, col = cell.row, cell.col
+                            if row is not None and col is not None and row + 1 < 9:
+                                if previousInteraction == "arrow":
+                                    previousCell = get_cell(row, col, cell_list)
+                                    unhighlight(screen, cell.row, cell.col)
+                                else:
+                                    previousCell = selected_cell
+                                    unhighlight(screen, cell.row, cell.col)
+                                cell.highlighted = False
+                            print(cell.row, cell.col, "is highlighted")
+                    numH = 0
+                    for cell in cell_list:
+                        if cell.highlighted:
+                            numH += 1
+                    print(numH, " total highlighted")
+
+                    # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
+                    if row is not None and col is not None and row + 1 < 9:
+                        newRow = previousCell.row + 1
+                        newCol = previousCell.col
+                        newcell = get_cell(newRow, newCol, cell_list)
+                        newcell.highlight()
+                        selected_cell = newcell
+                        print("Current highlight at row: ", row + 1, "col: ", col)
+                    if input_active:
+                        if event.key == pygame.K_RETURN:
+                            #fill in cell
+                            try:
+                                userInput = int(input_text)
+                                print(userInput)
+                                if 1 <= userInput <= 9:  # Check if the input is a valid number
+                                    if selected_cell.value == 0:
+                                        selected_cell.displayfill(screen, button_font, userInput)
+                                        if (check_if_done(cell_list)):
+                                            # Initialize an empty 9x9 array
+                                            final_board = [[0 for _ in range(9)] for _ in range(9)]
+                                            # Fill in the final_board using the values from the cell_list
+                                            for i in range(9):
+                                                for j in range(9):
+                                                    final_board[i][j] = cell_list[i * 9 + j].value
+                                            print_board(final_board, 9, 9)
+                                            print("")
+
+                                            if final_board == solved_board:
+                                                print("You Win!")
+                                            else:
+                                                print("You Lose!")
+                                    else:
+                                        print("Cannot fill in already filled cell!")
+                                else:
+                                    print("Invalid input. Please enter a number between 1 and 9.")
+                            except ValueError:
+                                print("Invalid input. Please enter a valid number.")
+                            input_text = ""  # Reset the input_text after storing the input
+                            input_active = False  # Deactivate input mode
+                    previousInteraction = "arrow"
+                    print("Down arrow key pressed")
 
 
         # Font for the buttons
@@ -353,7 +621,7 @@ if __name__ == '__main__':
 
 
     board_screen = generate_board(board_screen, user, cell_list)
-    user = play_board(board_screen, cell_list, user)
+    user = play_board(board_screen, cell_list, user, original_board, solved_board)
 
 
 
@@ -369,7 +637,7 @@ if __name__ == '__main__':
             user = start_menu(start_screen)
             board_screen = pygame.display.set_mode([600, 700])
             board_screen = generate_board(board_screen, user)
-            user = play_board(board_screen, user)
+            user = play_board(board_screen, user, original_board, solved_board)
         if user == 6:
             sys.exit()
 
