@@ -12,6 +12,71 @@ def print_board(board,row_length,col_length):
     for col in range(row_length):
       print(f"{board[row][col]} ", end="")
     print()
+pygame.font.init()
+font = pygame.font.Font(None, 40)
+
+def display_you_win(screen):
+    screen.fill((255, 255, 255))
+    # Font for the buttons
+    button_font = pygame.font.Font(None, 50)
+    # Button creation
+
+    restart_text = button_font.render('Restart', 0, [255, 255, 255])
+    exit_text = button_font.render('Exit', 0, [255, 255, 255])
+
+
+    restart_surface = pygame.Surface((restart_text.get_size()[0] + 20, restart_text.get_size()[1] + 20))
+    restart_surface.fill([0, 0, 0])
+    restart_surface.blit(restart_text, (10, 10))
+
+    exit_surface = pygame.Surface((exit_text.get_size()[0] + 20, exit_text.get_size()[1] + 20))
+    exit_surface.fill([0, 0, 0])
+    exit_surface.blit(exit_text, (10, 10))
+
+
+    restart_rectangle = restart_surface.get_rect(center=(310, 650))
+    exit_rectangle = exit_surface.get_rect(center=(450, 650))
+
+
+    screen.blit(restart_surface, restart_rectangle)
+    screen.blit(exit_surface, exit_rectangle)
+
+    pygame.display.flip()
+
+def display_you_win(screen):
+    # Fill the background with white
+    screen.fill((255, 255, 255))
+
+    # Creates the fonts for the title and buttons
+    title_font = pygame.font.Font(None, 100)
+    button_font = pygame.font.Font(None, 50)
+
+    # Renders in the title
+    title_surface = title_font.render("You Win!", 0, [0, 225, 0])
+    title_rectangle = title_surface.get_rect(
+        center=(300, 200))
+    screen.blit(title_surface, title_rectangle)
+
+
+
+    pygame.display.flip()
+
+def display_you_lose(screen):
+        # Fill the background with white
+        screen.fill((255, 255, 255))
+
+        # Creates the fonts for the title and buttons
+        title_font = pygame.font.Font(None, 100)
+        button_font = pygame.font.Font(None, 50)
+
+        # Renders in the title
+        title_surface = title_font.render("You Lose!", 0, [225, 0, 0])
+        title_rectangle = title_surface.get_rect(
+            center=(300, 200))
+        screen.blit(title_surface, title_rectangle)
+
+        pygame.display.flip()
+
 def start_menu(screen):
     while True:
         for event in pygame.event.get():
@@ -32,6 +97,8 @@ def start_menu(screen):
         #Creates the fonts for the title and buttons
         title_font = pygame.font.Font(None, 100)
         button_font = pygame.font.Font(None, 50)
+
+
 
         #Renders in the title
         title_surface = title_font.render("Sudoku", 0, [0,0,0])
@@ -75,7 +142,6 @@ def generate_board(screen, user, cell_list):
         #Background color of board
         screen.fill((160,223,231))
 
-        font = pygame.font.Font(None, 40)
 
         #Creates the border
         pygame.draw.line(screen, (0,0,0), (0,0), (600,0), width=10)
@@ -212,7 +278,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             c = Cell(value, row, col, screen)
 
                             # Draw the cell (original value) using the Cell class method
-                            c.render(screen, font)
+                            c.render_reset(screen, font)
 
                     # Update the display
                     pygame.display.flip()
@@ -248,7 +314,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                 c = Cell(value, row, col, screen)
 
                                 # Draw the cell (original value) using the Cell class method
-                                c.render(screen, font)
+                                c.render_reset(screen, font)
 
                         # Update the display
                         pygame.display.flip()
@@ -283,8 +349,10 @@ def play_board(screen, cell_list, user, original_board, solved_board):
 
                                         if final_board == solved_board:
                                             print("You Win!")
+                                            display_you_win(screen)
                                         else:
                                             print("You Lose!")
+                                            display_you_lose(screen)
                                 else:
                                     print("Cannot fill in already filled cell!")
                             else:
@@ -557,7 +625,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                     previousInteraction = "arrow"
                     print("Down arrow key pressed")
 
-
+    
         # Font for the buttons
         button_font = pygame.font.Font(None, 50)
         #Button creation
@@ -597,7 +665,7 @@ if __name__ == '__main__':
     board_screen = pygame.display.set_mode([600, 700])
 
     if user == 1: #change after to make removed: 30
-        game_board, solved_board = sudoku_generator.generate_sudoku(9, 3)
+        game_board, solved_board = sudoku_generator.generate_sudoku(9, 1)
         original_board = copy.deepcopy(game_board)
         print_board(solved_board,9,9)
         for i in range(0,9):
@@ -626,20 +694,6 @@ if __name__ == '__main__':
 
 
 
-
-    while True:
-        if user == 4:
-            #Print original board removing user's inputs
-            pass
-        elif user == 5:
-            #Restarts everything
-            start_screen = pygame.display.set_mode([600, 600])
-            user = start_menu(start_screen)
-            board_screen = pygame.display.set_mode([600, 700])
-            board_screen = generate_board(board_screen, user)
-            user = play_board(board_screen, user, original_board, solved_board)
-        if user == 6:
-            sys.exit()
 
 
 
