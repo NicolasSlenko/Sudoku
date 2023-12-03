@@ -6,45 +6,15 @@ from cell import unhighlight, get_cell
 
 original_board = None
 solved_board = None
-
-
+#prints out board
 def print_board(board, row_length, col_length):
     for row in range(row_length):
         for col in range(row_length):
             print(f"{board[row][col]} ", end="")
         print()
-
-
 pygame.font.init()
 font = pygame.font.Font(None, 40)
-
-
-def display_you_win(screen):
-    screen.fill((255, 255, 255))
-    # Font for the buttons
-    button_font = pygame.font.Font(None, 50)
-    # Button creation
-
-    restart_text = button_font.render('Restart', 0, [255, 255, 255])
-    exit_text = button_font.render('Exit', 0, [255, 255, 255])
-
-    restart_surface = pygame.Surface((restart_text.get_size()[0] + 20, restart_text.get_size()[1] + 20))
-    restart_surface.fill([0, 0, 0])
-    restart_surface.blit(restart_text, (10, 10))
-
-    exit_surface = pygame.Surface((exit_text.get_size()[0] + 20, exit_text.get_size()[1] + 20))
-    exit_surface.fill([0, 0, 0])
-    exit_surface.blit(exit_text, (10, 10))
-
-    restart_rectangle = restart_surface.get_rect(center=(310, 650))
-    exit_rectangle = exit_surface.get_rect(center=(450, 650))
-
-    screen.blit(restart_surface, restart_rectangle)
-    screen.blit(exit_surface, exit_rectangle)
-
-    pygame.display.flip()
-
-
+#condition for if a player wins
 def display_you_win(screen):
     # Fill the background with white
     screen.fill((255, 255, 255))
@@ -60,8 +30,7 @@ def display_you_win(screen):
     screen.blit(title_surface, title_rectangle)
 
     pygame.display.flip()
-
-
+#condition for if a plyer loses
 def display_you_lose(screen):
     # Fill the background with white
     screen.fill((255, 255, 255))
@@ -77,10 +46,10 @@ def display_you_lose(screen):
     screen.blit(title_surface, title_rectangle)
 
     pygame.display.flip()
-
-
+#displays start menu to user
 def start_menu(screen):
     while True:
+        #
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -131,8 +100,7 @@ def start_menu(screen):
         screen.blit(hard_surface, hard_rectangle)
 
         pygame.display.flip()
-
-
+#generates board for user depending on diffculty chosen
 def generate_board(screen, user, cell_list):
     print(user)
 
@@ -181,8 +149,7 @@ def generate_board(screen, user, cell_list):
             screen.blit(text, text_rect)
 
     return screen
-
-
+#Allows user to use either arrow keys or mouse click, as well defining functionality for different buttons
 def play_board(screen, cell_list, user, original_board, solved_board):
     oldx = 0
     oldy = 0
@@ -233,9 +200,8 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                         # Check if the mouse click is within the exit button's rectangle
                 if exit_rectangle.collidepoint(pos):
                     sys.exit()  # Exit the program
-
+                #resets program back to home screen with difficulty buttons
                 if restart_rectangle.collidepoint(pos):
-                    # Generate a new board
                     screen.fill((160, 223, 231))
                     pygame.init()
                     start_screen = pygame.display.set_mode([600, 600])
@@ -267,6 +233,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                 cell_list.append(c)
                     board_screen = generate_board(board_screen, user, cell_list)
                     user = play_board(board_screen, cell_list, user, original_board, solved_board)
+                #regenerates a new board with the same difficulty as previously chosen
                 if reset_rectangle.collidepoint(pos):
                     # Clear the screen
                     screen.fill((160, 223, 231))
@@ -304,7 +271,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             cell_list[i * 9 + j].set_cell_value(original_value)
 
                     print("Board reset to original state!")
-
+            #defines functionality of down arrow key
             elif event.type == pygame.KEYDOWN:
                 if input_active:
                     if event.key == pygame.K_RETURN:
@@ -345,8 +312,8 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             # Handle other key presses to append characters to the input
                             input_text += event.unicode
 
-                # arrow key functions
-                if event.key == pygame.K_LEFT:  #############################################################
+                # defines functionality of left arrow key
+                if event.key == pygame.K_LEFT:
                     input_active = True
                     # get current position based on currently highlighted cell
                     row, col = None, None
@@ -411,6 +378,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
 
                     previousInteraction = "arrow"
                     print("Left arrow key pressed")
+                #defines functionaliy of right arrow key
                 elif event.key == pygame.K_RIGHT:
                     input_active = True
                     # get current position based on currently highlighted cell
@@ -475,6 +443,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             input_active = False  # Deactivate input mode
                     previousInteraction = "arrow"
                     print("Right arrow key pressed")
+                # defines functionaliy of up arrow key
                 elif event.key == pygame.K_UP:
                     input_active = True
                     # get current position based on currently highlighted cell
@@ -539,6 +508,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             input_active = False  # Deactivate input mode
                     previousInteraction = "arrow"
                     print("Up arrow key pressed")
+                #defines functionality for down arrow key
                 elif event.key == pygame.K_DOWN:
                     input_active = True
                     # get current position based on currently highlighted cell
@@ -635,15 +605,14 @@ def play_board(screen, cell_list, user, original_board, solved_board):
 
 
 if __name__ == '__main__':
+    #code in this main fucntion displays start screen with difficulty buttons
     pygame.init()
     start_screen = pygame.display.set_mode([600, 600])
     pygame.display.set_caption("Sudoku")
     user = start_menu(start_screen)
     cell_list = []
-
     board_screen = pygame.display.set_mode([600, 700])
-
-    if user == 1:  # change after to make removed: 30
+    if user == 1:
         game_board, solved_board = sudoku_generator.generate_sudoku(9, 30)
         original_board = copy.deepcopy(game_board)
         print_board(solved_board, 9, 9)
@@ -665,10 +634,8 @@ if __name__ == '__main__':
             for j in range(0, 9):
                 c = Cell(game_board[i][j], i, j, board_screen)
                 cell_list.append(c)
-
     board_screen = generate_board(board_screen, user, cell_list)
     user = play_board(board_screen, cell_list, user, original_board, solved_board)
-
 
 
 
