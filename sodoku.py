@@ -4,16 +4,22 @@ import cell
 from cell import Cell
 from cell import unhighlight, get_cell
 
+#store boards for later usage
 original_board = None
 solved_board = None
-#prints out board
+
+#prints out board (for debugging)
 def print_board(board, row_length, col_length):
     for row in range(row_length):
         for col in range(row_length):
             print(f"{board[row][col]} ", end="")
         print()
+
+#initiliaze font
 pygame.font.init()
 font = pygame.font.Font(None, 40)
+
+
 #condition for if a player wins
 def display_you_win(screen):
     # Fill the background with white
@@ -139,9 +145,9 @@ def generate_board(screen, user, cell_list):
     board_size = 9
     cell_size = 600 // board_size
 
-    for x in cell_list:
-        value = x.get_value()
-        row, col = x.get_row(), x.get_col()
+    for cell in cell_list:
+        value = cell.get_value()
+        row, col = cell.get_row(), cell.get_col()
 
         text = font.render(str(value), 0, 'black')
         text_rect = text.get_rect(center=((col + 0.5) * cell_size, (row + 0.5) * cell_size))
@@ -149,32 +155,35 @@ def generate_board(screen, user, cell_list):
             screen.blit(text, text_rect)
 
     return screen
-#Allows user to use either arrow keys or mouse click, as well defining functionality for different buttons
+#Allows user to use either arrow keys or mouse click, as well defining functionality for different buttons. This is the meat of the project
 def play_board(screen, cell_list, user, original_board, solved_board):
     oldx = 0
     oldy = 0
-    input_active = False
     input_text = ""
-    selected_cell = None  # Variable to store the selected cell
+    # Variables to keep track of interactions
+    selected_cell = None
     previousInteraction = None
     previousCell = None
+    input_active = False
 
+    #checks if board is filled with inputs
     def check_if_done(cell_list):
         for cell in cell_list:
             if cell.value == 0:
                 return False
         return True
-
+    #runs until user hits quit
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-
+            #click event
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 x = pos[0] // 66
                 y = pos[1] // 66
 
+                #handle assignment of previousInteraction to handle highlight and unhighlight correctly
                 if previousInteraction == "arrow" or previousInteraction == "click" and oldx != None:
                     unhighlight(screen, oldx, oldy)
                     for cell in cell_list:
@@ -186,6 +195,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                     cellOld = get_cell(oldx, oldy, cell_list)
                     cellOld.highlighted = False
 
+                #handle click input to display on board (highlight and unhighlight aswell)
                 for z in cell_list:
                     if z.get_row() == y and z.get_col() == x:
                         z.highlight()
@@ -197,10 +207,10 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                         previousInteraction = "click"
                         previousCell = get_cell(oldx, oldy, cell_list)
                         break
-                        # Check if the mouse click is within the exit button's rectangle
+                # Check if the mouse click is within the exit button's rectangle (Exit button)
                 if exit_rectangle.collidepoint(pos):
                     sys.exit()  # Exit the program
-                #resets program back to home screen with difficulty buttons
+                #resets program back to home screen with difficulty buttons  (Restart button)
                 if restart_rectangle.collidepoint(pos):
                     screen.fill((160, 223, 231))
                     pygame.init()
@@ -233,7 +243,8 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                 cell_list.append(c)
                     board_screen = generate_board(board_screen, user, cell_list)
                     user = play_board(board_screen, cell_list, user, original_board, solved_board)
-                #regenerates a new board with the same difficulty as previously chosen
+
+                #Removed previously user generated cells (Reset Button)
                 if reset_rectangle.collidepoint(pos):
                     # Clear the screen
                     screen.fill((160, 223, 231))
@@ -254,11 +265,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             row, col = i, j
 
                             font = pygame.font.Font(None, 40)
-
-                            # Create a new Cell object with the original value and cell size
                             c = Cell(value, row, col, screen)
-
-                            # Draw the cell (original value) using the Cell class method
                             c.render_reset(screen, font)
 
                     # Update the display
@@ -273,10 +280,11 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                     print("Board reset to original state!")
             #defines functionality of down arrow key
             elif event.type == pygame.KEYDOWN:
-                if input_active:
-                    if event.key == pygame.K_RETURN:
-                        # Handle Enter key to store the inputted number
+
+                if input_active:  #set to true when an arrow key is clicked
+                    if event.key == pygame.K_RETURN: # Handle Enter key to store the inputted number
                         try:
+                            #get userInput and display it if its valid
                             userInput = int(input_text)
                             print(userInput)
                             if 1 <= userInput <= 9:  # Check if the input is a valid number
@@ -292,9 +300,11 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                         print_board(final_board, 9, 9)
                                         print("")
 
+                                        #handle win
                                         if final_board == solved_board:
                                             print("You Win!")
                                             display_you_win(screen)
+                                        #handle loss
                                         else:
                                             print("You Lose!")
                                             display_you_lose(screen)
@@ -304,12 +314,11 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                 print("Invalid input. Please enter a number between 1 and 9.")
                         except ValueError:
                             print("Invalid input. Please enter a valid number.")
-                        input_text = ""  # Reset the input_text after storing the input
-                        input_active = False  # Deactivate input mode
+                        input_text = ""
+                        input_active = False
                     else:
-                        if (
-                                event.key != pygame.K_LEFT and event.key != pygame.K_RIGHT and event.key != pygame.K_UP and event.key != pygame.K_DOWN):
-                            # Handle other key presses to append characters to the input
+                        # Handle other key presses to append characters to the input
+                        if (event.key != pygame.K_LEFT and event.key != pygame.K_RIGHT and event.key != pygame.K_UP and event.key != pygame.K_DOWN):
                             input_text += event.unicode
 
                 # defines functionality of left arrow key
@@ -329,12 +338,8 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                     previousCell = selected_cell
                                     unhighlight(screen, cell.row, cell.col)
                                 cell.highlighted = False
-                            print(cell.row, cell.col, "is highlighted")
-                    numH = 0
-                    for cell in cell_list:
-                        if cell.highlighted:
-                            numH += 1
-                    print(numH, " total highlighted")
+
+
 
                     # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
                     if row is not None and col is not None and col - 1 >= 0:
@@ -343,7 +348,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                         newcell = get_cell(newRow, newCol, cell_list)
                         newcell.highlight()
                         selected_cell = newcell
-                        print("Current highlight at row: ", row, "col: ", col - 1)
+
                     if input_active:
                         if event.key == pygame.K_RETURN:
                             # fill in cell
@@ -395,12 +400,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                     previousCell = selected_cell
                                     unhighlight(screen, cell.row, cell.col)
                                 cell.highlighted = False
-                            print(cell.row, cell.col, "is highlighted")
-                    numH = 0
-                    for cell in cell_list:
-                        if cell.highlighted:
-                            numH += 1
-                    print(numH, " total highlighted")
+
 
                     # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
                     if row is not None and col is not None and col + 1 < 9:
@@ -409,7 +409,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                         newcell = get_cell(newRow, newCol, cell_list)
                         newcell.highlight()
                         selected_cell = newcell
-                        print("Current highlight at row: ", row, "col: ", col + 1)
+
                     if input_active:
                         if event.key == pygame.K_RETURN:
                             # fill in cell
@@ -443,6 +443,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                             input_active = False  # Deactivate input mode
                     previousInteraction = "arrow"
                     print("Right arrow key pressed")
+
                 # defines functionaliy of up arrow key
                 elif event.key == pygame.K_UP:
                     input_active = True
@@ -460,12 +461,6 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                     previousCell = selected_cell
                                     unhighlight(screen, cell.row, cell.col)
                                 cell.highlighted = False
-                            print(cell.row, cell.col, "is highlighted")
-                    numH = 0
-                    for cell in cell_list:
-                        if cell.highlighted:
-                            numH += 1
-                    print(numH, " total highlighted")
 
                     # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
                     if row is not None and col is not None and row - 1 >= 0:
@@ -474,7 +469,6 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                         newcell = get_cell(newRow, newCol, cell_list)
                         newcell.highlight()
                         selected_cell = newcell
-                        print("Current highlight at row: ", row - 1, "col: ", col)
                     if input_active:
                         if event.key == pygame.K_RETURN:
                             # fill in cell
@@ -525,12 +519,8 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                                     previousCell = selected_cell
                                     unhighlight(screen, cell.row, cell.col)
                                 cell.highlighted = False
-                            print(cell.row, cell.col, "is highlighted")
-                    numH = 0
-                    for cell in cell_list:
-                        if cell.highlighted:
-                            numH += 1
-                    print(numH, " total highlighted")
+
+
 
                     # highlight cell to left of current cell (if it doesn't go out of bounds) and unhighlight other cell
                     if row is not None and col is not None and row + 1 < 9:
@@ -539,7 +529,7 @@ def play_board(screen, cell_list, user, original_board, solved_board):
                         newcell = get_cell(newRow, newCol, cell_list)
                         newcell.highlight()
                         selected_cell = newcell
-                        print("Current highlight at row: ", row + 1, "col: ", col)
+
                     if input_active:
                         if event.key == pygame.K_RETURN:
                             # fill in cell
@@ -623,6 +613,7 @@ if __name__ == '__main__':
     elif user == 2:
         game_board, solved_board = sudoku_generator.generate_sudoku(9, 40)
         original_board = copy.deepcopy(game_board)
+        print_board(solved_board, 9, 9)
         for i in range(0, 9):
             for j in range(0, 9):
                 c = Cell(game_board[i][j], i, j, board_screen)
@@ -630,13 +621,13 @@ if __name__ == '__main__':
     elif user == 3:
         game_board, solved_board = sudoku_generator.generate_sudoku(9, 50)
         original_board = copy.deepcopy(game_board)
+        print_board(solved_board, 9, 9)
         for i in range(0, 9):
             for j in range(0, 9):
                 c = Cell(game_board[i][j], i, j, board_screen)
                 cell_list.append(c)
     board_screen = generate_board(board_screen, user, cell_list)
     user = play_board(board_screen, cell_list, user, original_board, solved_board)
-
 
 
 
