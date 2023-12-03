@@ -33,10 +33,14 @@ class Cell:
             self.render(screen, font)
     def render(self, screen, font):
         if self.value != 0:
+            text = font.render(str(self.value), True, (255, 0, 0))
+            text_rect = text.get_rect(center=((self.col + 0.5) * 66, (self.row + 0.5) * 66))
+            screen.blit(text, text_rect)
+    def render_reset(self,screen,font):
+        if self.value != 0:
             text = font.render(str(self.value), True, (0, 0, 0))
             text_rect = text.get_rect(center=((self.col + 0.5) * 66, (self.row + 0.5) * 66))
             screen.blit(text, text_rect)
-
     def get_value(self):
         return self.value
 
