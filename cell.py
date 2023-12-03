@@ -5,6 +5,7 @@ class Cell:
         self.row = row
         self.col = col
         self.screen = screen
+        self.highlighted = False
 
 
     def set_cell_value(self, value):
@@ -24,6 +25,7 @@ class Cell:
         pygame.draw.line(self.screen, (255, 0, 0), (self.col * 66, self.row * 66), (self.col * 66, ((self.row + 1) * 66)), width=2)
         pygame.draw.line(self.screen, (255, 0, 0), (self.col * 66, ((self.row + 1) * 66)), ((self.col + 1) * 66, ((self.row + 1) * 66)), width=2)
         pygame.draw.line(self.screen, (255, 0, 0), ((self.col + 1) * 66, self.row * 66), ((self.col + 1) * 66, ((self.row + 1) * 66)), width=2)
+        self.highlighted = True
 
     def displayfill(self, screen, font, number):
         if self.highlight and self.value == 0:
@@ -53,3 +55,10 @@ def unhighlight(screen, row, col):
                          ((col + 1) * 66, ((row + 1) * 66)), width=2)
     pygame.draw.line(screen, (0, 0, 0), ((col + 1) * 66, row * 66),
                          ((col + 1) * 66, ((row + 1) * 66)), width=2)
+
+
+def get_cell(row, col, cell_list):
+    for cell in cell_list:
+        if cell.row == row and cell.col == col:
+            return cell
+
